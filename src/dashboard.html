@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Hark2API 控制台 · Claude Opus 5.5 网关</title>
+<style>
+  :root {
+    --bg: #090D14;
+    --paper: #101622;
+    --paper-2: #161F30;
+    --border: #1E2B42;
+    --border-light: #2A3C5C;
+    --text: #F1F5F9;
+    --text-sub: #94A3B8;
+    --text-dim: #64748B;
+    --accent: #A855F7;
+    --accent-soft: rgba(168, 85, 247, 0.12);
+    --blue: #38BDF8;
+    --green: #22C55E;
+    --red: #EF4444;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: max(16px, env(safe-area-inset-top)) 16px calc(64px + env(safe-area-inset-bottom));
+  }
+  .wrap { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+  /* 顶部导航栏 */
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--paper); border: 1px solid var(--border);
+    padding: 14px 18px; border-radius: var(--radius);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 38px; height: 38px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    display: grid; place-items: center; font-size: 20px;
+    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);
+  }
+  .logo-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-badge { font-size: 11px; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+  .header-r { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--green); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+  /* 卡片容器 */
+  .card {
+    background: var(--paper); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px;
+  }
+  .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+  /* 仪表盘进度条 */
+  .meter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 600px) { .meter-grid { grid-template-columns: 1fr; } }
+  .meter-box {
+    background: var(--paper-2); border: 1px solid var(--border);
+    padding: 14px; border-radius: var(--radius-sm);
+  }
+  .meter-title { font-size: 12px; color: var(--text-sub); display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .meter-val { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+  .bar { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--blue)); transition: width 0.3s; }
+
+  /* 按钮与输入 */
+  .btn {
+    border: none; outline: none; cursor: pointer; font-weight: 600;
+    padding: 8px 16px; border-radius: 10px; font-size: 13px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.15s ease;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #7C3AED); color: #fff; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-tonal { background: var(--paper-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-tonal:hover { background: var(--border); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 8px; }
+  .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+  .input {
+    width: 100%; background: var(--paper-2); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px; border-radius: 10px; font-size: 13px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .input:focus { border-color: var(--accent); }
+
+  /* 账号表格 */
+  .acc-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .acc-row { border-bottom: 1px solid var(--border); }
+  .acc-row:last-child { border-bottom: none; }
+  .acc-cell { padding: 12px 6px; vertical-align: middle; }
+  .acc-name { font-weight: 700; font-size: 14px; }
+  .acc-meta { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+  /* 客户端接入代码区 */
+  .code-block {
+    background: #06090F; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 12px; font-family: var(--mono); font-size: 12px; color: #CBD5E1;
+    overflow-x: auto; line-height: 1.6;
+  }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: #1E293B; border: 1px solid var(--border-light); color: #fff;
+    padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; transition: all 0.25s ease;
+    pointer-events: none; z-index: 999;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">👑</div>
+      <div>
+        <div class="logo-title">Hark2API <span class="logo-badge">Claude Opus 5.5</span></div>
+        <div style="font-size:11px;color:var(--text-sub);margin-top:1px">独立网关 · 单端口多账号轮询并发池</div>
+      </div>
+    </div>
+    <div class="header-r">
+      <div class="dot"></div>
+      <span id="gateway-port">Port 8795</span>
+    </div>
+  </header>
+
+  <!-- 仪表盘统计卡片 -->
+  <section class="card">
+    <div class="card-head">
+      <div class="card-title">📊 官方真实实时配额探测 (/api/billing/summary)</div>
+      <button class="btn btn-tonal btn-sm" onclick="loadQuota()">↻ 刷新额度</button>
+    </div>
+    <div class="meter-grid">
+      <div class="meter-box">
+        <div class="meter-title"><span>今日并发池剩余 (单号800万/天)</span><span id="day-pct">100%</span></div>
+        <div class="meter-val" id="day-val">— / 800 万</div>
+        <div class="bar"><div class="bar-fill" id="day-bar" style="width:100%"></div></div>
+      </div>
+      <div class="meter-box">
+        <div class="meter-title"><span>月度池总量 (单号4000万/月)</span><span id="pool-pct">100%</span></div>
+        <div class="meter-val" id="pool-val">— / 4000 万</div>
+        <div class="bar"><div class="bar-fill" id="pool-bar" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text-sub);display:flex;justify-content:space-between">
+      <span>底座驱动: <b style="color:var(--text)">Claude Opus 5.5 + Handoff 智能体</b></span>
+      <span id="sync-time">上次同步: 刚刚</span>
+    </div>
+  </section>
+
+  <!-- 录入 Hark 账号卡片 -->
+  <section class="card">
+    <div class="card-head">
+      <div class="card-title">➕ 录入 Hark 账号凭据 (支持多账号并发叠加)</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input class="input" type="text" id="ipt-name" placeholder="自定义备注名（例如：Hark-主号 / Hark-小号1）">
+      <textarea class="input" id="ipt-cookie" rows="3" placeholder="直接粘贴 CookieBox 复制的整串 Cookie 或 __Secure-hark.session_token" style="font-family:var(--mono);font-size:12px"></textarea>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" id="btn-add" onclick="submitAccount()">一键录入并探测额度</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 账号池列表 -->
+  <section class="card">
+    <div class="card-head">
+      <div class="card-title">👥 当前账号池 (<span id="acc-count">0</span> 个账号并发轮询)</div>
+      <button class="btn btn-tonal btn-sm" onclick="loadAccounts()">↻ 刷新列表</button>
+    </div>
+    <table class="acc-table">
+      <tbody id="acc-tbody">
+        <tr><td class="acc-cell" style="text-align:center;color:var(--text-sub)">加载账号中...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 客户端接入指引 -->
+  <section class="card">
+    <div class="card-head">
+      <div class="card-title">🚀 客户端接入配置 (NextChat / LobeChat / Cursor / Cherry)</div>
+    </div>
+    <div class="code-block">
+# 1. OpenAI 兼容接口地址:
+API 接口地址: http://127.0.0.1:8795/v1
+API Key: 任意字符 (如: sk-hark2api)
+
+# 2. 官方模型列表 (支持思维链与云电脑操作):
+- claude-opus-5-5  (官方旗舰当世最高水平 Opus 5.5)
+- claude-sonnet-5-5 (极速代码与逻辑模型)
+- hark-agent       (原生自主云电脑网页操作与比价智能体)
+- hark-pro         (全自主多智能体旗舰版)
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast">已复制</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  setTimeout(() => t.className = 'toast', 2200);
+}
+
+async function loadQuota() {
+  try {
+    const res = await fetch('/api/hark/quota');
+    const d = await res.json();
+    if (d.ok) {
+      const dp = d.daily_percentage ?? 100;
+      const pp = d.pool_percentage ?? 100;
+      $('day-pct').textContent = dp + '%';
+      $('day-bar').style.width = dp + '%';
+      $('day-val').textContent = `${(d.total_daily_remaining / 10000).toFixed(0)}万 / ${(d.total_daily_limit / 10000).toFixed(0)}万 Token`;
+
+      $('pool-pct').textContent = pp + '%';
+      $('pool-bar').style.width = pp + '%';
+      $('pool-val').textContent = `${(d.total_pool_remaining / 10000).toFixed(0)}万 / ${(d.total_pool_limit / 10000).toFixed(0)}万 Token`;
+
+      $('sync-time').textContent = '上次同步: ' + d.updated_time;
+      showToast('配额刷新成功');
+    }
+  } catch (e) {
+    showToast('刷新配额异常: ' + e.message);
+  }
+}
+
+async function loadAccounts() {
+  try {
+    const res = await fetch('/api/hark/accounts');
+    const d = await res.json();
+    const tbody = $('acc-tbody');
+    const list = d.accounts || [];
+    $('acc-count').textContent = list.length;
+
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td class="acc-cell" style="text-align:center;color:var(--text-sub);padding:24px">暂无账号，请在上方录入第一个 Hark 账号</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(a => {
+      const isPri = a.isPrimary;
+      const bill = a.billing;
+      const dailyTxt = bill ? `今日剩余 ${(bill.dailyRemaining/10000).toFixed(1)}万 / ${(bill.dailyLimit/10000).toFixed(0)}万 (${bill.dailyPercent}%)` : '点击探活测速获取官方余额';
+      return `
+        <tr class="acc-row">
+          <td class="acc-cell" style="width:24px">
+            <div style="width:10px;height:10px;border-radius:50%;background:${isPri ? 'var(--accent)' : 'var(--blue)'}"></div>
+          </td>
+          <td class="acc-cell">
+            <div class="acc-name">${a.name} <span style="font-size:12px;font-weight:400;color:var(--text-sub)">(${a.email})</span></div>
+            <div class="acc-meta">${isPri ? '👑 当前主控' : '⚡ 并发轮询'} · ${dailyTxt}</div>
+          </td>
+          <td class="acc-cell" style="text-align:right;white-space:nowrap">
+            <button class="btn btn-tonal btn-sm" onclick="testAccount('${a.id}')">探活/查余额</button>
+            ${isPri ? '' : `<button class="btn btn-tonal btn-sm" onclick="switchAccount('${a.id}')">设为主控</button>`}
+            <button class="btn btn-danger btn-sm" onclick="removeAccount('${a.id}')">删除</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (e) {
+    showToast('获取账号列表异常: ' + e.message);
+  }
+}
+
+async function submitAccount() {
+  const nameIpt = $('ipt-name');
+  const cookieIpt = $('ipt-cookie');
+  const cookie = cookieIpt.value.trim();
+  if (!cookie) return showToast('请粘贴 Cookie 或 Token');
+
+  const btn = $('btn-add');
+  btn.disabled = true;
+  btn.textContent = '正在连接 Hark 探测余额…';
+
+  try {
+    const res = await fetch('/api/hark/accounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nameIpt.value.trim(), cookie })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast('录入成功，正在向官方探测额度...');
+      await fetch('/api/hark/accounts/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: d.account.id })
+      });
+      nameIpt.value = '';
+      cookieIpt.value = '';
+      showToast('✅ 账号上线就绪，今日800万Token已到账！');
+      await loadAccounts();
+      await loadQuota();
+    } else {
+      showToast('录入失败: ' + (d.error || '未知错误'));
+    }
+  } catch (e) {
+    showToast('网络异常: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '一键录入并探测额度';
+  }
+}
+
+async function testAccount(id) {
+  showToast('正在探测 Hark 真实配额与连通性…');
+  try {
+    const res = await fetch('/api/hark/accounts/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      showToast(`✓ 探活正常 (${d.latency}ms) · ${d.preview}`);
+      await loadAccounts();
+      await loadQuota();
+    } else {
+      showToast('✕ 探活失败: ' + (d.error || '异常'));
+    }
+  } catch (e) {
+    showToast('测试异常: ' + e.message);
+  }
+}
+
+async function switchAccount(id) {
+  try {
+    await fetch('/api/hark/accounts/switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    showToast('已切换为主控账号');
+    await loadAccounts();
+  } catch (e) {
+    showToast('切换失败');
+  }
+}
+
+async function removeAccount(id) {
+  if (!confirm('确定要从账号池中移除该账号吗？')) return;
+  try {
+    await fetch('/api/hark/accounts/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    showToast('已成功移除');
+    await loadAccounts();
+    await loadQuota();
+  } catch (e) {
+    showToast('移除失败');
+  }
+}
+
+// 自动初始化
+loadQuota();
+loadAccounts();
+</script>
+
+</body>
+</html>

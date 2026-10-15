@@ -1,0 +1,84 @@
+name: Build Hark2API Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths: [ "android/**", "src/**", ".github/workflows/build-apk.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-hark2api
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Package APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.5
+
+      - name: Fetch Node.js runtime (nodejs-mobile)
+        run: |
+          curl -sL -o /tmp/nm.zip https://github.com/nodejs-mobile/nodejs-mobile/releases/download/v18.20.4/nodejs-mobile-v18.20.4-android.zip
+          mkdir -p android/app/libnode
+          unzip -q /tmp/nm.zip -d android/app/libnode
+          rm -rf android/app/libnode/bin/armeabi-v7a android/app/libnode/bin/x86_64
+
+      - name: Bundle gateway assets
+        run: |
+          G=android/app/src/main/assets/gateway
+          mkdir -p $G
+          cp -r src $G/
+          cp -r data $G/ 2>/dev/null || true
+          cp package.json $G/
+
+      - name: Build Android APK (release signed)
+        run: |
+          cd android
+          gradle assembleRelease --no-daemon --stacktrace
+          mkdir -p ../dist
+          cp app/build/outputs/apk/release/*.apk ../dist/Hark2API-v1.0.0.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: Hark2API-APK
+          path: dist/Hark2API-v1.0.0.apk
+          retention-days: 7
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "Hark2API v1.0.0 (Claude Opus 5.5 独立网关)"
+          make_latest: true
+          body: |
+            ### 👑 Hark2API v1.0.0 - Claude Opus 5.5 / Sonnet 5.5 & Handoff 独立网关
+
+            - 🚀 **独立共存**：独立包名 `com.hark2api.gateway`，默认独立端口 `8795`，与既有软件完美并存！
+            - 👑 **顶配模型**：原生支持 `claude-opus-5-5` (100万上下文)、`claude-sonnet-5-5` 与 `hark-agent`。
+            - ⚡ **单端口多账号并发池**：通过 Round-Robin 算法自动轮询并发分流，单号 800万/天 额度自动叠加。
+            - 📊 **官方真实配额探测**：控制台实时展示每日 800 万 / 月度 4000 万 Token 消耗进度条与重置倒计时。
+            - 🖥️ **云电脑截屏与思维链呈现**：实时捕获 `agentActivityWindow` 云电脑屏幕截屏与鼠标点击轨迹。
+            - 🔒 **永久正式签名固化**：内置永久签名密钥库，未来所有版本无缝平滑覆盖更新！
+          files: dist/Hark2API-v1.0.0.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,14 @@
+{
+  "name": "hark2api",
+  "version": "1.0.0",
+  "description": "High-performance OpenAI & Anthropic API bridge for Hark.com (Claude Opus 5.5 & Handoff Agent)",
+  "main": "src/server.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node tests/test.mjs"
+  },
+  "keywords": ["hark", "claude-opus-5-5", "claude-sonnet-5-5", "api-gateway", "web2api"],
+  "author": "zr987459",
+  "license": "MIT"
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "id": "hark_master_01",
+    "name": "Hark-主号",
+    "email": "hexacag566@yournike.com",
+    "cookie": "__cf_bm=lroB8SnWQlR8ZXIqi4cUELlA_JVSjqdld4H.LKI0raU-1792031987.6315572-1.0.1.1-QQBM7hAOetcwT42onybetYO9B3E2iju9.4eaT.f0ExA6eorO8qfT_BRzdYl70n16qFucU1yKGh5rIU5IHhqDAjHrgoHi9t1yMeQsTf.Mt.WUDdPlyAL2x7WdQiRM_yTE; __Secure-hark.session_token=wAwZBsrzSfxlp3ZVuKpjSNsxpfmoMYH9.97LaOenYuJg%2FlNae86%2BmmW7CtCqHTKqSMmTJXoQRues%3D; __Secure-hark.region=us; __Secure-hark.access=app; _ga=GA1.1.45865685.1792032018; _ga_TK219R2YVB=GS2.1.s1792032018$o1$g1$t1792032026$j52$l0$h0",
+    "userAgent": "Mozilla/5.0 (Linux; Android 16; V2417A Build/BP2A.250605.031.A3; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/154.0.8037.107 Mobile Safari/537.36",
+    "active": true,
+    "addedAt": 1792044849039,
+    "lastUsed": 0,
+    "quotaStatus": "ok",
+    "billing": {
+      "planName": "hark pro",
+      "dailyLimit": 8000000,
+      "dailyUsed": 453329,
+      "dailyRemaining": 7546671,
+      "dailyPercent": 94,
+      "poolLimit": 40000000,
+      "poolUsed": 453329,
+      "poolRemaining": 39546671,
+      "poolPercent": 99
+    }
+  }
+]
